@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <title>LN Chats - Login</title>
+    <style>
+        body { background: #111b21; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #222e35; padding: 30px; border-radius: 10px; width: 350px; text-align: center; }
+        .logo { color: #00a884; font-size: 30px; font-weight: bold; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 5px; background: #2a3942; color: white; outline: none; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #00a884; border: none; color: white; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+        .hidden { display: none; }
+        .switch-btn { background: transparent; color: #8696a0; font-size: 14px; margin-top: 20px; border: none; cursor: pointer; text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">LN Chats</div>
+        
+        <div id="log-step1">
+            <h3>Login</h3>
+            <input type="text" id="l-user" placeholder="Apna Username dalein">
+            <button onclick="loginOTP()">Get OTP</button>
+            <button class="switch-btn" onclick="window.location.href='signup.html'">Account nahi hai? Signup karein</button>
+        </div>
+
+        <div id="log-step2" class="hidden">
+            <p>OTP bhej diya gaya hai</p>
+            <input type="text" id="l-otp" placeholder="6-digit OTP">
+            <button onclick="verifyLogin()">Verify & Login</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyDibQ_M1PR_efL7esaI0-HRXbUg8z9c3J4", projectId: "ln-chat-36c6f" };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        emailjs.init("TrQjTBz2VOpcSchP_");
+        let gOTP, userData;
+
+        window.loginOTP = async () => {
+            const user = document.getElementById('l-user').value.trim();
+            if(!user) return alert("Username dalein!");
+
+            const snap = await getDoc(doc(db, "users", user));
+            if(!snap.exists()) return alert("User nahi mila! Pehle Signup karein.");
+
+            userData = snap.data();
+            gOTP = Math.floor(100000 + Math.random() * 900000);
+
+            emailjs.send("service_8dagg7j", "template_y81cq77", { 
+                email: userData.email, 
+                otp_code: gOTP 
+            }).then(() => {
+                document.getElementById('log-step1').classList.add('hidden');
+                document.getElementById('log-step2').classList.remove('hidden');
+            });
+        };
+
+        window.verifyLogin = () => {
+            if(document.getElementById('l-otp').value == gOTP) {
+                localStorage.setItem("ln_user", userData.username);
+                window.location.href = "home.html";
+            } else { alert("Galat OTP!"); }
+        };
+    </script>
+</body>
+</html>
